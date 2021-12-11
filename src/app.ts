@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 
 import * as questionController from './controllers/questionController'
+import { userPost } from './controllers/users'
 
 const app = express();
 app.use(express.json());
@@ -13,5 +14,6 @@ app.get('/status', (req, res) => {
 
 app.post('/questions', questionController.postQuestion);
 app.get('/questions', questionController.getQuestions);
+app.post('/users', userPost)
 
 export default app;
