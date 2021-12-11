@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import connection from '../database/database';
 
-export default async function questionController(req: Request, res: Response) {
+async function postQuestion(req: Request, res: Response) {
 
   const question: string = req.body.question;
   const student: string = req.body.student;
@@ -34,4 +34,18 @@ export default async function questionController(req: Request, res: Response) {
   `, [question, student, class_id, tags, date]);
 
   res.status(200).send(result.rows[0])
+}
+
+async function getQuestions(req: Request, res: Response) {
+  const result = await connection.query(`
+  SELECT questions.id, question, student, class.class_name as "class", "submitAt"
+    FROM questions JOIN class ON questions.class_id = class.id;
+  `)
+
+  res.status(200).send(result.rows)
+}
+
+export {
+  postQuestion,
+  getQuestions,
 }
