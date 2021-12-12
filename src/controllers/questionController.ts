@@ -61,7 +61,7 @@ async function answer(req: Request, res: Response) {
   res.sendStatus(200)
 }
 
-async function getOneQuestion(req: Request, res: Response) {
+async function getOneQuestion (req: Request, res: Response) {
   const id: string = req.params.id
 
   const answered = await connection.query(`SELECT answered FROM questions WHERE id = $1;`, [id]);
