@@ -39,13 +39,28 @@ async function postQuestion(req: Request, res: Response) {
 async function getQuestions(req: Request, res: Response) {
   const result = await connection.query(`
   SELECT questions.id, question, student, class.class_name as "class", "submitAt"
-    FROM questions JOIN class ON questions.class_id = class.id;
-  `)
+    FROM questions JOIN class ON questions.class_id = class.id
+  WHERE answered = 'false';
+  `);
 
   res.status(200).send(result.rows)
+}
+
+async function answer(req: Request, res: Response) {
+  const authorization: string = req.headers['authorization'];
+  const token: string = authorization?.replace('Bearer ', '');
+  const answer: string = req.body.answer;
+  const date = new Date()
+  const result = await connection.query(`
+    UPDATE questions
+    SET "answered" = 'true', "answeredAt" = $1, token_replied = $2, answer = $3
+    RETURNING*
+  `, [date, token, answer])
+  res.send(result.rows)
 }
 
 export {
   postQuestion,
   getQuestions,
+  answer,
 }

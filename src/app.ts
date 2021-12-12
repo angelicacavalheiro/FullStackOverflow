@@ -15,5 +15,6 @@ app.get('/status', (req, res) => {
 app.post('/questions', questionController.postQuestion);
 app.get('/questions', questionController.getQuestions);
 app.post('/users', userPost)
+app.post('/questions/:id', questionController.answer)
 
 export default app;
