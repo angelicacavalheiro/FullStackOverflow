@@ -29,7 +29,7 @@ async function postQuestion(req: Request, res: Response) {
   // adicionando pergunta ao banco
   const result = await connection.query(`
     INSERT INTO questions (question, student, class_id, tags, answered, "submitAt")
-    VALUES ($1, $2, $3, $4, 'false', $5)
+    VALUES ($1, $2, $3, $4, false, $5)
     RETURNING id
   `, [question, student, class_id, tags, date]);
 
@@ -65,7 +65,7 @@ async function getOneQuestion (req: Request, res: Response) {
   const id: string = req.params.id
 
   const answered = await connection.query(`SELECT answered FROM questions WHERE id = $1;`, [id]);
-  if (answered.rows[0].answered === 'false') {
+  if (answered.rows[0].answered === false) {
     const result = await connection.query(`
       SELECT question, student, class.class_name as "class", tags, answered, "submitAt"
         FROM questions JOIN class ON questions.class_id = class.id
