@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import connection from '../database/database';
+import { postQuestionSchema } from '../validations/schemas'
 
 async function postQuestion(req: Request, res: Response) {
 
@@ -9,6 +10,19 @@ async function postQuestion(req: Request, res: Response) {
   const tags: string = req.body.tags;
 
   // adicionar validações onde sera o service
+
+  const errors = postQuestionSchema.validate(
+    {
+      question,
+      student,
+      student_class,
+      tags,
+    }).error;
+
+    if(errors){
+      console.log(errors)
+      return  res.status(400).send('faltam informações ou a turma esta fora do padrão esperado. Ex. T2')
+    }
 
   const date = new Date()
 
