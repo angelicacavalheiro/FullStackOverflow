@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import connection from '../database/database';
-import { postQuestionSchema } from '../validations/schemas'
+import { postQuestionSchema, answerSchema } from '../validations/schemas'
 
 async function postQuestion(req: Request, res: Response) {
 
@@ -21,7 +21,7 @@ async function postQuestion(req: Request, res: Response) {
 
     if(errors){
       console.log(errors)
-      return  res.status(400).send('faltam informações ou a turma esta fora do padrão esperado. Ex. T2')
+      return  res.status(400).send('faltam informações ou a turma esta fora do padrão esperado(Ex.: T2)')
     }
 
   const date = new Date()
@@ -66,6 +66,17 @@ async function answer(req: Request, res: Response) {
   const answer: string = req.body.answer;
   const id: string = req.params.id
   const date = new Date()
+
+  const errors = answerSchema.validate(
+    {
+      answer,
+    }).error;
+
+    if(errors){
+      console.log(errors)
+      return res.status(400).send('Você deveria enviar uma resposta, ou sua resposta é muito pequena')
+    }
+
   await connection.query(`
     UPDATE questions
     SET "answered" = true, "answeredAt" = $1, token_replied = $2, answer = $3

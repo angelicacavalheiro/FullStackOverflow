@@ -1,12 +1,23 @@
 import connection from "../database/database";
 import { Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
+import { postUserSchema } from '../validations/schemas'
 
 async function userPost(req: Request, res: Response) {
   const name: string = req.body.name;
   const student_class: string = req.body.class;
 
   // adicionar validações onde sera o service
+  const errors = postUserSchema.validate(
+    {
+      name,
+      student_class,
+    }).error;
+
+    if(errors){
+      console.log(errors)
+      return  res.status(400).send('faltam informações ou a turma esta fora do padrão esperado(Ex.: T2)')
+    }
 
   // procurar se existe classe, se n existe inserir e retornar o id
   let class_id
