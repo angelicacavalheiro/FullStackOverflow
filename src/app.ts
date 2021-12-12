@@ -16,5 +16,6 @@ app.post('/questions', questionController.postQuestion);
 app.get('/questions', questionController.getQuestions);
 app.post('/users', userPost)
 app.post('/questions/:id', questionController.answer)
+app.get('/questions/:id', questionController.getOneQuestion)
 
 export default app;

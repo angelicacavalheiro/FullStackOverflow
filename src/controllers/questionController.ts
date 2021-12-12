@@ -40,7 +40,7 @@ async function getQuestions(req: Request, res: Response) {
   const result = await connection.query(`
   SELECT questions.id, question, student, class.class_name as "class", "submitAt"
     FROM questions JOIN class ON questions.class_id = class.id
-  WHERE answered = 'false';
+  WHERE answered = false;
   `);
 
   res.status(200).send(result.rows)
@@ -50,17 +50,42 @@ async function answer(req: Request, res: Response) {
   const authorization: string = req.headers['authorization'];
   const token: string = authorization?.replace('Bearer ', '');
   const answer: string = req.body.answer;
+  const id: string = req.params.id
   const date = new Date()
-  const result = await connection.query(`
+  await connection.query(`
     UPDATE questions
-    SET "answered" = 'true', "answeredAt" = $1, token_replied = $2, answer = $3
+    SET "answered" = true, "answeredAt" = $1, token_replied = $2, answer = $3
+    WHERE id = $4
     RETURNING*
-  `, [date, token, answer])
-  res.send(result.rows)
+  `, [date, token, answer, id])
+  res.sendStatus(200)
+}
+
+async function getOneQuestion(req: Request, res: Response) {
+  const id: string = req.params.id
+
+  const answered = await connection.query(`SELECT answered FROM questions WHERE id = $1;`, [id]);
+  if (answered.rows[0].answered === 'false') {
+    const result = await connection.query(`
+      SELECT question, student, class.class_name as "class", tags, answered, "submitAt"
+        FROM questions JOIN class ON questions.class_id = class.id
+      WHERE questions.id = $1;
+    `, [id]);
+    return res.status(200).send(result.rows[0])
+  }
+  const result = await connection.query(`
+    SELECT question, student, class.class_name as "class", tags, answered, "submitAt",
+    "answeredAt", "user".user_name as "answeredBy", "answer"
+      FROM questions JOIN class ON questions.class_id = class.id
+      JOIN "user" ON questions.token_replied = "user".token
+    WHERE questions.id = $1;
+    `, [id]);
+  res.status(200).send(result.rows[0])
 }
 
 export {
   postQuestion,
   getQuestions,
   answer,
+  getOneQuestion,
 }
