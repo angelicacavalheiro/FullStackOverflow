@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import connection from '../database/database';
-import { postQuestionSchema, answerSchema } from '../validations/schemas'
+import { answerSchema } from '../validations/schemas';
+import * as service from '../services/questionService';
 
 async function postQuestion(req: Request, res: Response) {
 
@@ -9,67 +10,33 @@ async function postQuestion(req: Request, res: Response) {
   const student_class: string = req.body.class;
   const tags: string = req.body.tags;
 
-  // adicionar validações onde sera o service
-
-  const errors = postQuestionSchema.validate(
-    {
-      question,
-      student,
-      student_class,
-      tags,
-    }).error;
-
-    if(errors){
-      console.log(errors)
-      return  res.status(400).send('faltam informações ou a turma esta fora do padrão esperado(Ex.: T2)')
-    }
-
-  const date = new Date()
-
-  // procurar se existe classe, se n existe inserir e retornar o id
-  let class_id
-  const existClass = await connection.query(`
-    SELECT id FROM class WHERE class_name = ($1)
-  `, [student_class])
-  if(!existClass.rowCount) {
-    const result = await connection.query (`
-    INSERT INTO class (class_name) VALUES ($1) RETURNING id`,
-    [student_class]);
-    class_id = result.rows[0].id
-  } else {
-    class_id = existClass.rows[0].id
+  const isValid = await service.validateQuestionPost(
+    question,
+    student,
+    student_class,
+    tags,
+  )
+  if(!isValid){
+    return res.status(400).send('faltam informações ou a turma esta fora do padrão esperado(Ex.: T2)')
   }
 
-  // adicionando pergunta ao banco
-  const result = await connection.query(`
-    INSERT INTO questions (question, student, class_id, tags, answered, "submitAt")
-    VALUES ($1, $2, $3, $4, false, $5)
-    RETURNING id
-  `, [question, student, class_id, tags, date]);
+  const class_id = await service.getClassId(student_class);
 
-  res.status(200).send(result.rows[0])
+  const questionId: {} = await service.insertQuestion(
+    question,
+    student,
+    class_id,
+    tags,
+  )
+
+  res.status(200).send(questionId)
 }
 
 async function getQuestions(req: Request, res: Response) {
-  const questions = await connection.query(`
-  SELECT questions.id, question, student, class.class_name as "class", "submitAt"
-    FROM questions JOIN class ON questions.class_id = class.id
-  WHERE answered = false;
-  `);
 
-  const questiosFormated = questions.rows.map(question => (
-    {
-      id: question.id,
-      question: question.question,
-      student: question.student,
-      class: question.class,
-      submitAt: (question.submitAt).substring(0, (question.submitAt).length-13).replace(/[T]/, ' ')
-    }
-  ))
+  const questiosUnanswered: {} = await service.formatQuestion()
 
-  // saida = entrada.substring(0, entrada.length-13).replace(/[T]/, ' ')
-
-  res.status(200).send(questiosFormated)
+  res.status(200).send(questiosUnanswered)
 }
 
 async function answer(req: Request, res: Response) {
