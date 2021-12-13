@@ -1,4 +1,4 @@
-import { postQuestionSchema } from '../validations/schemas';
+import { postQuestionSchema, answerSchema } from '../validations/schemas';
 import connection from '../database/database';
 import * as repository from '../repositories/questionRepository';
 
@@ -63,9 +63,64 @@ async function formatQuestion() {
   return questiosFormated
 }
 
+async function validateAnswePost(
+  answer: string,
+){
+  const errors = answerSchema.validate(
+    {
+      answer,
+    }).error;
+
+    if(errors){
+      console.log(errors)
+      return null
+    }
+    return 'ok'
+}
+
+async function answeredFormatQuestion(id: string) {
+  const questions = await repository.getQuestionStatus(id)
+  console.log(`no controller`, questions)
+  let questionsFormated
+
+  if (questions === false) {
+    const question = await repository.getUnansweredQuestion(id);
+    questionsFormated = question.rows.map(q => (
+      {
+        question: q.question,
+        student: q.student,
+        class: q.class,
+        tags: q.tags,
+        answered: q.answered,
+        submitAt: (q.submitAt).substring(0, (q.submitAt).length-13).replace(/[T]/, ' ')
+      }
+    ))
+  }
+  else {
+    const question = await repository.getAnsweredQuestion(id);
+    questionsFormated = question.rows.map(q => (
+      {
+        question: q.question,
+        student: q.student,
+        class: q.class,
+        tags: q.tags,
+        answered: q.answered,
+        submitAt: (q.submitAt).substring(0, (q.submitAt).length-13).replace(/[T]/, ' '),
+        answeredAt: (q.answeredAt).substring(0, (q.answeredAt).length-13).replace(/[T]/, ' '),
+        answeredBy: q.answeredBy,
+        answer: q.answer
+      }
+    ))
+  }
+  return questionsFormated[0]
+}
+
+
 export {
   validateQuestionPost,
   getClassId,
   insertQuestion,
   formatQuestion,
+  validateAnswePost,
+  answeredFormatQuestion,
 }

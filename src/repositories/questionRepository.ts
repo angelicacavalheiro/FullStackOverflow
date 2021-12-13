@@ -53,9 +53,55 @@ async function getUnansweredQuestions():  Promise<Questions[]> {
   const questionsUnanswered: Questions[] = (questions.rows)
   return questionsUnanswered;
 }
+async function postAnswer(
+  token: string,
+  answer: string,
+  id: string,
+  date: Date
+) {
+  await connection.query(`
+    UPDATE questions
+    SET "answered" = true, "answeredAt" = $1, token_replied = $2, answer = $3
+    WHERE id = $4
+    RETURNING*
+  `, [date, token, answer, id])
+  return 'ok'
+}
+
+async function getQuestionStatus(id: string) {
+  const answered = await connection.query(`
+    SELECT answered
+      FROM questions WHERE id = $1
+  `,[id]);
+  return (answered.rows[0].answered)
+}
+
+async function getUnansweredQuestion(id: string) {
+  const question = await connection.query(`
+    SELECT question, student, class.class_name as "class", tags, answered, "submitAt"
+      FROM questions JOIN class ON questions.class_id = class.id
+    WHERE questions.id = $1;
+  `, [id]);
+  return question;
+}
+
+async function getAnsweredQuestion(id: string) {
+  const question = await connection.query(`
+  SELECT question, student, class.class_name as "class", tags, answered, "submitAt",
+  "answeredAt", "user".user_name as "answeredBy", "answer"
+    FROM questions JOIN class ON questions.class_id = class.id
+    JOIN "user" ON questions.token_replied = "user".token
+  WHERE questions.id = $1;
+  `, [id]);
+  return question;
+}
 
 export {
-    findClass,
-    insertQuestion,
-    getUnansweredQuestions,
+  findClass,
+  insertQuestion,
+  getUnansweredQuestions,
+  postAnswer,
+  getQuestionStatus,
+  getUnansweredQuestion,
+  getAnsweredQuestion
 }
