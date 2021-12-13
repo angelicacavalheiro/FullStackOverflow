@@ -96,6 +96,25 @@ async function getAnsweredQuestion(id: string) {
   return question;
 }
 
+interface User {
+  id: number,
+  question: string,
+  student: string,
+  class: string,
+  submitAt: string,
+}
+
+async function insertUser(
+  token: string, name: string, class_id: number
+  ): Promise<User[]> {
+  const userInsert = await connection.query(`
+    INSERT INTO "user" (token, user_name, class_id) VALUES ($1, $2, $3)
+    RETURNING token
+  `, [token, name, class_id])
+    const userToken: User[] = userInsert.rows[0]
+    return userToken;
+}
+
 export {
   findClass,
   insertQuestion,
@@ -103,5 +122,6 @@ export {
   postAnswer,
   getQuestionStatus,
   getUnansweredQuestion,
-  getAnsweredQuestion
+  getAnsweredQuestion,
+  insertUser
 }

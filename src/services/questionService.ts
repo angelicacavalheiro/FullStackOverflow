@@ -1,5 +1,5 @@
-import { postQuestionSchema, answerSchema } from '../validations/schemas';
-import connection from '../database/database';
+import { postQuestionSchema, answerSchema, postUserSchema} from '../validations/schemas';
+import { v4 as uuid } from 'uuid';
 import * as repository from '../repositories/questionRepository';
 
 async function validateQuestionPost(
@@ -80,7 +80,6 @@ async function validateAnswePost(
 
 async function answeredFormatQuestion(id: string) {
   const questions = await repository.getQuestionStatus(id)
-  console.log(`no controller`, questions)
   let questionsFormated
 
   if (questions === false) {
@@ -115,6 +114,32 @@ async function answeredFormatQuestion(id: string) {
   return questionsFormated[0]
 }
 
+async function validateUserPost(
+  name: string,
+  student_class: string,
+){
+  const errors = postUserSchema.validate(
+    {
+      name,
+      student_class
+    }).error;
+
+    if(errors){
+      console.log(errors)
+      return null
+    }
+    return 'ok'
+}
+
+async function createToken() {
+  const token = uuid();
+  return token
+}
+
+async function insertUser(token: string, name: string, class_id: number){
+  const postAndGetToken = await repository.insertUser(token, name, class_id)
+  return postAndGetToken
+}
 
 export {
   validateQuestionPost,
@@ -123,4 +148,7 @@ export {
   formatQuestion,
   validateAnswePost,
   answeredFormatQuestion,
+  validateUserPost,
+  createToken,
+  insertUser,
 }

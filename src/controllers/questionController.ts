@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import connection from '../database/database';
 import * as service from '../services/questionService';
 import * as repository from '../repositories/questionRepository';
 
